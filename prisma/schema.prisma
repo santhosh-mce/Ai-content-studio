@@ -188,6 +188,7 @@ model ReelProject {
   topic        String
   platform     String
   duration     String
+  storyline    String?
   script       String?
   hook         String?
   cta          String?
