@@ -1,0 +1,280 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Auth.js Models
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Custom App Models
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  avatar        String?
+  role          String?   @default("user")
+  plan          String?   @default("free")
+  credits       Int       @default(50)
+  bio           String?
+  website       String?
+  location      String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  accounts        Account[]
+  sessions        Session[]
+  projects        Project[]
+  generations     Generation[]
+  images          Image[]
+  media           Media[]
+  contentCalendar ContentCalendar[]
+  creditUsage     CreditUsage[]
+  subscriptions   Subscription[]
+  reelProjects    ReelProject[]
+  apiKeys         ApiKey[]
+  teamMembers     TeamMember[]
+  integrations    Integration[]
+  preference      UserPreference?
+
+  @@map("users")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  type      String // thumbnail, post, reel, pinterest
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generations Generation[]
+
+  @@map("projects")
+}
+
+model Generation {
+  id         String   @id @default(uuid())
+  projectId  String?  @map("project_id")
+  userId     String   @map("user_id")
+  type       String
+  prompt     String
+  result     Json?
+  taskId     String?  @map("task_id")
+  imageUrl   String?  @map("image_url")
+  tokensUsed Int?     @map("tokens_used")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images  Image[]
+
+  @@map("generations")
+}
+
+model Image {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  generationId String   @map("generation_id")
+  imageUrl     String   @map("image_url")
+  thumbnailUrl String?  @map("thumbnail_url")
+  model        String?
+  cloudinaryId String?  @map("cloudinary_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+
+  @@map("images")
+}
+
+model ContentCalendar {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  title       String
+  description String?
+  platform    String
+  contentType String?  @map("content_type")
+  campaign    String?
+  publishDate DateTime @map("publish_date") @db.Date
+  status      String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("content_calendar")
+}
+
+model CreditUsage {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String
+  credits   Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_usage")
+}
+
+model Subscription {
+  id                   String  @id @default(uuid())
+  userId               String  @unique @map("user_id")
+  stripeCustomerId     String? @map("stripe_customer_id")
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+  plan                 String
+  status               String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String?
+  prompt    String?
+  imageUrl  String   @map("image_url")
+  publicId  String?  @map("public_id")
+  type      String   @default("image") // thumbnail, post, reel, etc.
+  platform  String?
+  size      Int?
+  width     Int?
+  height    Int?
+  downloads Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("media")
+}
+
+model ReelProject {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  topic        String
+  platform     String
+  duration     String
+  script       String?
+  hook         String?
+  cta          String?
+  voiceover    String?
+  videoUrl     String?  @map("video_url")
+  thumbnailUrl String?  @map("thumbnail_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reel_projects")
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  name      String
+  key       String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("api_keys")
+}
+
+model Team {
+  id        String       @id @default(uuid())
+  name      String
+  createdAt DateTime     @default(now()) @map("created_at")
+  members   TeamMember[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String   @map("team_id")
+  userId    String   @map("user_id")
+  role      String   @default("Member") // Owner, Admin, Editor, Viewer
+  createdAt DateTime @default(now()) @map("created_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("team_members")
+}
+
+model Integration {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  provider  String   // cloudinary, google_drive, etc.
+  status    String   @default("connected")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("integrations")
+}
+
+model UserPreference {
+  id              String  @id @default(uuid())
+  userId          String  @unique @map("user_id")
+  theme           String  @default("dark")
+  accentColor     String  @default("purple")
+  font            String  @default("inter")
+  defaultAiModel  String  @default("Naraya Chat")
+  defaultImageModel String @default("FLUX Kontext")
+  defaultTone     String  @default("Professional")
+  defaultLanguage String  @default("English")
+  emailNotifications Boolean @default(true)
+  pushNotifications  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
