@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,22 +6,20 @@ datasource db {
   provider = "postgresql"
 }
 
-// Auth.js Models
 model Account {
   id                String  @id @default(uuid())
   userId            String  @map("user_id")
   type              String
   provider          String
   providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -49,50 +44,47 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// Custom App Models
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  avatar        String?
-  role          String?   @default("user")
-  plan          String?   @default("free")
-  credits       Int       @default(50)
-  bio           String?
-  website       String?
-  location      String?
-  createdAt     DateTime  @default(now()) @map("created_at")
-
+  id              String            @id @default(uuid())
+  name            String?
+  email           String?           @unique
+  emailVerified   DateTime?         @map("email_verified")
+  image           String?
+  avatar          String?
+  role            String?           @default("user")
+  plan            String?           @default("free")
+  credits         Int               @default(50)
+  bio             String?
+  website         String?
+  location        String?
+  createdAt       DateTime          @default(now()) @map("created_at")
   accounts        Account[]
-  sessions        Session[]
-  projects        Project[]
-  generations     Generation[]
-  images          Image[]
-  media           Media[]
+  apiKeys         ApiKey[]
   contentCalendar ContentCalendar[]
   creditUsage     CreditUsage[]
-  subscriptions   Subscription[]
-  reelProjects    ReelProject[]
-  apiKeys         ApiKey[]
-  teamMembers     TeamMember[]
+  generations     Generation[]
+  images          Image[]
   integrations    Integration[]
+  media           Media[]
+  projects        Project[]
+  reelProjects    ReelProject[]
+  sessions        Session[]
+  subscriptions   Subscription?
+  teamMembers     TeamMember[]
   preference      UserPreference?
 
   @@map("users")
 }
 
 model Project {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  title     String
-  type      String // thumbnail, post, reel, pinterest
-  status    String   @default("active")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String       @id @default(uuid())
+  userId      String       @map("user_id")
+  title       String
+  type        String
+  status      String       @default("active")
+  createdAt   DateTime     @default(now()) @map("created_at")
   generations Generation[]
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("projects")
 }
@@ -108,26 +100,24 @@ model Generation {
   imageUrl   String?  @map("image_url")
   tokensUsed Int?     @map("tokens_used")
   createdAt  DateTime @default(now()) @map("created_at")
-
-  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  images  Image[]
+  project    Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  images     Image[]
 
   @@map("generations")
 }
 
 model Image {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  generationId String   @map("generation_id")
-  imageUrl     String   @map("image_url")
-  thumbnailUrl String?  @map("thumbnail_url")
+  id           String     @id @default(uuid())
+  userId       String     @map("user_id")
+  generationId String     @map("generation_id")
+  imageUrl     String     @map("image_url")
+  thumbnailUrl String?    @map("thumbnail_url")
   model        String?
-  cloudinaryId String?  @map("cloudinary_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  cloudinaryId String?    @map("cloudinary_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  generation   Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("images")
 }
@@ -144,8 +134,7 @@ model ContentCalendar {
   status      String
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("content_calendar")
 }
@@ -156,8 +145,7 @@ model CreditUsage {
   action    String
   credits   Int
   createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("credit_usage")
 }
@@ -169,8 +157,7 @@ model Subscription {
   stripeSubscriptionId String? @map("stripe_subscription_id")
   plan                 String
   status               String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
 }
@@ -182,7 +169,7 @@ model Media {
   prompt    String?
   imageUrl  String   @map("image_url")
   publicId  String?  @map("public_id")
-  type      String   @default("image") // thumbnail, post, reel, etc.
+  type      String   @default("image")
   platform  String?
   size      Int?
   width     Int?
@@ -190,8 +177,7 @@ model Media {
   downloads Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("media")
 }
@@ -209,8 +195,7 @@ model ReelProject {
   videoUrl     String?  @map("video_url")
   thumbnailUrl String?  @map("thumbnail_url")
   createdAt    DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("reel_projects")
 }
@@ -222,8 +207,8 @@ model ApiKey {
   key       String   @unique
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@map("api_keys")
 }
 
@@ -240,11 +225,10 @@ model TeamMember {
   id        String   @id @default(uuid())
   teamId    String   @map("team_id")
   userId    String   @map("user_id")
-  role      String   @default("Member") // Owner, Admin, Editor, Viewer
+  role      String   @default("Member")
   createdAt DateTime @default(now()) @map("created_at")
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("team_members")
 }
@@ -252,29 +236,27 @@ model TeamMember {
 model Integration {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  provider  String   // cloudinary, google_drive, etc.
+  provider  String
   status    String   @default("connected")
   createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("integrations")
 }
 
 model UserPreference {
-  id              String  @id @default(uuid())
-  userId          String  @unique @map("user_id")
-  theme           String  @default("dark")
-  accentColor     String  @default("purple")
-  font            String  @default("inter")
-  defaultAiModel  String  @default("Naraya Chat")
-  defaultImageModel String @default("FLUX Kontext")
-  defaultTone     String  @default("Professional")
-  defaultLanguage String  @default("English")
+  id                 String  @id @default(uuid())
+  userId             String  @unique @map("user_id")
+  theme              String  @default("dark")
+  accentColor        String  @default("purple")
+  font               String  @default("inter")
+  defaultAiModel     String  @default("Naraya Chat")
+  defaultImageModel  String  @default("FLUX Kontext")
+  defaultTone        String  @default("Professional")
+  defaultLanguage    String  @default("English")
   emailNotifications Boolean @default(true)
   pushNotifications  Boolean @default(false)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
 }
